@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="I came across this x86 virtualization project yesterday on a bored Sunday afternoon. I’m not sure how I didn’t find this project earlier. Check it out. This is incredible. A x86 emulator written in Ja">
+<meta name="keywords" content="JavaScript,assembly">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Writing a minimal boot sector for the v86 emulator">
+<meta property="og:url" content="http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/index.html">
+<meta property="og:site_name" content="Benjamin Doherty&#39;s Blog">
+<meta property="og:description" content="I came across this x86 virtualization project yesterday on a bored Sunday afternoon. I’m not sure how I didn’t find this project earlier. Check it out. This is incredible. A x86 emulator written in Ja">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/clouds.png">
+<meta property="og:image" content="http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/minesweeper.png">
+<meta property="og:image" content="http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/hello_world.png">
+<meta property="og:updated_time" content="2018-05-13T03:21:10.802Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Writing a minimal boot sector for the v86 emulator">
+<meta name="twitter:description" content="I came across this x86 virtualization project yesterday on a bored Sunday afternoon. I’m not sure how I didn’t find this project earlier. Check it out. This is incredible. A x86 emulator written in Ja">
+<meta name="twitter:image" content="http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/clouds.png">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>Writing a minimal boot sector for the v86 emulator</title>
+    <!-- styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- persian styles -->
+    
+      <link rel="stylesheet" href="/css/rtl.css">
+    
+    <!-- rss -->
+    
+    
+</head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="/projects_url">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2018/05/12/hello-world/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&text=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&is_video=false&description=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Writing a minimal boot sector for the v86 emulator&body=Check out this article: http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&name=Writing a minimal boot sector for the v86 emulator&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Cloning-the-v86-source"><span class="toc-number">1.</span> <span class="toc-text">Cloning the v86 source</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Writing-a-simple-boot-device"><span class="toc-number">2.</span> <span class="toc-text">Writing a simple boot device</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Booting-our-floppy-image"><span class="toc-number">3.</span> <span class="toc-text">Booting our floppy image</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index my4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        Writing a minimal boot sector for the v86 emulator
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Benjamin Doherty</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2017-08-08T02:36:28.000Z" itemprop="datePublished">2017-08-07</time>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link" href="/tags/JavaScript/">JavaScript</a>, <a class="tag-link" href="/tags/assembly/">assembly</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p>I came across this x86 virtualization project yesterday on a bored Sunday afternoon. I’m not sure how I didn’t find this project earlier. <a href="http://copy.sh/v86/" target="_blank" rel="noopener">Check it out</a>.</p>
+<p>This is incredible. A x86 emulator written in JavaScript. Yes, JavaScript! It supports Windows 95, 98, and even MS-DOS. This hits home because these are the OSes that I used growing up as a kid. Seeing them emulated on modern hardware is quite the trip. Even better, it’s all done in JavaScript and runs within your browser. Oh how far we’ve come…</p>
+<img src="/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/clouds.png" title="Clouds desktop wallpaper">
+<p><em>The Clouds desktop wallpaper, the de facto “cool” wallpaper.</em></p>
+<img src="/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/minesweeper.png" title="Fancy a game of Minesweeper?">
+<p><em>20 years later and I still suck at Minesweeper.</em></p>
+<p>I decided to write a minimal boot sector to test things out. It’s pretty straightforward with just a few quirks along the way I had to work through. I’m working on macOS 10.12, but everything should be fairly straightforward on any Unix-based system.</p>
+<h2 id="Cloning-the-v86-source"><a href="#Cloning-the-v86-source" class="headerlink" title="Cloning the v86 source"></a>Cloning the v86 source</h2><p>First thing, let’s clone the repo. Technically this isn’t necessary, but I like running things locally so I can mess with the code, add debugger statements, etc.</p>
+<pre><code>$ git clone https://github.com/copy/v86
+</code></pre><p>Since we’re running locally, We need to run a server or else Chrome (or any modern browser) will freak out over cross origin requests used to load the OS images. Luckily we’re provided one within the repo:</p>
+<pre><code>$ cd v86
+$ make run
+</code></pre><p>This uses Python’s <code>SimpleHTTPServer</code> to serve all the files locally. Now we can open up a web browser (you may have to first allow network connections from Python):</p>
+<p><code>localhost:8000/debug.html</code></p>
+<p>We see a bunch of predefined images under Quickstart, but we won’t bother with any of those (they must be downloaded separately and aren’t included in the repo we just cloned). They sure are fun to play mess around with though. I recommend doing it directly from copy.sh/v86.</p>
+<h2 id="Writing-a-simple-boot-device"><a href="#Writing-a-simple-boot-device" class="headerlink" title="Writing a simple boot device"></a>Writing a simple boot device</h2><p>Alright, without clicking anything else, hit ‘Start Emulation’. We see a BIOS message which tells us booting has failed due to no bootable devices. So let’s make one!</p>
+<p>I won’t go too in depth into how an x86 processor boots up. There’s plenty of resources out there that go into it in depth. One of my favorite is this unfinished draft, <a href="https://www.cs.bham.ac.uk/~exr/lectures/opsys/10_11/lectures/os-dev.pdf" target="_blank" rel="noopener">“Writing a Simple Operating System - from Scratch”</a> by Nick Blundell. I recommend Chapters 2 and 3 as a basis into writing boot sector code. I can’t remember how I found it, but it’s quite illuminating if you’ve never written code outside of <a href="https://en.wikipedia.org/wiki/User_space" target="_blank" rel="noopener">userland</a> before.</p>
+<p>Here’s our minimal “Hello world” boot sector:</p>
+<pre><code>;
+; A minimal boot sector that prints a &apos;Hello, world&apos; message
+;
+
+; Initialize the stack pointer to the address 0x8000
+mov bp, 0x8000
+mov sp, bp
+
+; Our boot sector has been loaded into memory at 0x7c00
+; Set our es segment register to 0x07c0
+; the address to print is calculated (segment * 16 + offset)
+mov ax, 0x07c0
+mov es, ax
+
+; Call BIOS service to print a string
+mov bp, hello
+mov ah, 0x13        ; BIOS function 13 - print a string to the screen
+mov al, 0x01        ; argument, update cursor after printing
+mov bl, 0x0b        ; argument, text color - magenta
+mov cx, 12          ; argument, length of string (including the null terminator)
+mov dh, 2           ; argument, row to put string
+mov dl, 0           ; argument, column to put string
+int 10h             ; call BIOS service
+
+; Loop until the end of time
+jmp $
+
+hello db &apos;Hello World&apos;
+
+; Padding and magic BIOS number
+times 510-($-$$) db 0
+dw 0xaa55
+</code></pre><p>We can compile it to binary with <a href="http://www.nasm.us/" target="_blank" rel="noopener">nasm</a>:</p>
+<pre><code>$ nasm -f bin os.asm
+</code></pre><p>The <code>-f bin</code> flags instructs nasm to output raw binary. Let’s open with a hex editor and verify our boot sector:</p>
+<pre><code>bd00 8089 ecb8 c007 8ec0 bd1e 00b4 13b0 01b3 0bb9 0c00 b602 b200 cd10 ebfe 4865
+6c6c 6f20 576f 726c 6400 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 55aa
+</code></pre><p>Notice it’s 512 bytes (the length of a sector), and the last bytes are the magic number <code>55AA</code>. The “junk” in the first 20 bytes or so is our boot code!</p>
+<p>This bootsector will work with emulators like Bochs and Qemu, but One quirk with v86 is that we must provide a “full” floppy disk, not just the first sector. Pro tip: always have your network tab open in Chrome in order to see debug messages!</p>
+<p>Looking at the v86 code, we can see the different floppy types supported. <a href="https://github.com/copy/v86/blob/5ef8c3e614ed3b4548cd2af9007f464742ac6a51/src/floppy.js#L64-L76" target="_blank" rel="noopener">src/floppy.js</a>:</p>
+<pre><code>var floppy_types = {
+            160  : { type: 1, tracks: 40, sectors: 8 , heads: 1 },
+            180  : { type: 1, tracks: 40, sectors: 9 , heads: 1 },
+            200  : { type: 1, tracks: 40, sectors: 10, heads: 1 },
+            320  : { type: 1, tracks: 40, sectors: 8 , heads: 2 },
+            360  : { type: 1, tracks: 40, sectors: 9 , heads: 2 },
+            400  : { type: 1, tracks: 40, sectors: 10, heads: 2 },
+            720  : { type: 3, tracks: 80, sectors: 9 , heads: 2 },
+            1200 : { type: 2, tracks: 80, sectors: 15, heads: 2 },
+            1440 : { type: 4, tracks: 80, sectors: 18, heads: 2 },
+            1722 : { type: 5, tracks: 82, sectors: 21, heads: 2 },
+            2880 : { type: 5, tracks: 80, sectors: 36, heads: 2 },
+        };
+
+        ...
+
+            floppy_type = floppy_types[this.floppy_size &gt;&gt; 10];
+</code></pre><p>We’ll target the first, smallest one, which is more than enough for our purposes.</p>
+<p><code>this.floppy_size</code> is the number of bytes of our OS image. Right now it’s 512, but we clearly need to add more bytes to make it a “full” floppy. Each sector is 512 bytes, and there are 8 sectors per track. 512 * 8 * 40 = 163840 bytes.</p>
+<p>We can also verify this by bitshifting <code>floppy_size</code> 10 to the left. Our desired “size” is 160.</p>
+<pre><code>&gt; 160 &lt;&lt; 10
+163840
+</code></pre><p>Perfect! So our floppy needs to be 163840 bytes long. Since our boot sector is already 512 bytes, we just need to add 163840 - 512 bytes to the end, which is exactly what we’ll do:</p>
+<pre><code>times (163840-512) db 0
+</code></pre><p>Let’s compile it with nasm again and then run it. <a href="https://gist.github.com/bejado/ee2feb20819f0ad5eeb2e0da5c3f8beb" target="_blank" rel="noopener">Here’s the complete assembly code</a>.</p>
+<pre><code>$ nasm -f bin os.asm
+</code></pre><h2 id="Booting-our-floppy-image"><a href="#Booting-our-floppy-image" class="headerlink" title="Booting our floppy image"></a>Booting our floppy image</h2><p>Go back to the v86 web page and hit the “exit” button to return to the main screen. We’ll choose our newly crafted floppy image as the “Floppy disk image.” Hit Start Emulation, wait a few seconds, and voila!</p>
+<img src="/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/hello_world.png" title="The final product">
+<p>There you have it, a bootable floppy image in ~17 lines of assembly. There’s so much more we can do from here. I had fun playing around with the v86 source code, setting debugger statements here and there and seeing how the emulation works. It’s complex, but at its essence it’s not doing anything magical. Take a look at <a href="https://github.com/copy/v86/blob/master/src/instructions.js" target="_blank" rel="noopener">src/instructions.js</a> where we can see (almost) every x86 instruction fully emulated.</p>
+<p>In JavaScript.</p>
+
+  </div>
+</article>
+
+
+
+    </div>
+    
+      <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="/projects_url">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Cloning-the-v86-source"><span class="toc-number">1.</span> <span class="toc-text">Cloning the v86 source</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Writing-a-simple-boot-device"><span class="toc-number">2.</span> <span class="toc-text">Writing a simple boot device</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Booting-our-floppy-image"><span class="toc-number">3.</span> <span class="toc-text">Booting our floppy image</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&text=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&is_video=false&description=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Writing a minimal boot sector for the v86 emulator&body=Check out this article: http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&name=Writing a minimal boot sector for the v86 emulator&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+    
+    <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2018 Benjamin Doherty
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="/projects_url">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
+<!-- styles -->
+<link rel="stylesheet" href="/lib/font-awesome/css/fontawesome-all.min.css">
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+<!-- jquery -->
+<script src="/lib/jquery/jquery.min.js"></script>
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+<script src="/js/main.js"></script>
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
