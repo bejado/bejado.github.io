@@ -17,7 +17,7 @@
 <meta property="og:image" content="http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/clouds.png">
 <meta property="og:image" content="http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/minesweeper.png">
 <meta property="og:image" content="http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/hello_world.png">
-<meta property="og:updated_time" content="2018-05-13T03:21:10.802Z">
+<meta property="og:updated_time" content="2018-06-17T16:35:54.162Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Writing a minimal boot sector for the v86 emulator">
 <meta name="twitter:description" content="I came across this x86 virtualization project yesterday on a bored Sunday afternoon. I’m not sure how I didn’t find this project earlier. Check it out. This is incredible. A x86 emulator written in Ja">
@@ -98,7 +98,13 @@
   <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
   <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
   <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&name=Writing a minimal boot sector for the v86 emulator&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&name=Writing a minimal boot sector for the v86 emulator&description=&lt;p&gt;I came across this x86 virtualization project yesterday on a bored Sunday afternoon. I’m not sure how I didn’t find this project earlier. &lt;a href=&#34;http://copy.sh/v86/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Check it out&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;This is incredible. A x86 emulator written in JavaScript. Yes, JavaScript! It supports Windows 95, 98, and even MS-DOS. This hits home because these are the OSes that I used growing up as a kid. Seeing them emulated on modern hardware is quite the trip. Even better, it’s all done in JavaScript and runs within your browser. Oh how far we’ve come…&lt;/p&gt;
+&lt;img src=&#34;/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/clouds.png&#34; title=&#34;Clouds desktop wallpaper&#34;&gt;
+&lt;p&gt;&lt;em&gt;The Clouds desktop wallpaper, the de facto “cool” wallpaper.&lt;/em&gt;&lt;/p&gt;
+&lt;img src=&#34;/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/minesweeper.png&#34; title=&#34;Fancy a game of Minesweeper?&#34;&gt;
+&lt;p&gt;&lt;em&gt;20 years later and I still suck at Minesweeper.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;I decided to write a minimal boot sector to test things out. It’s pretty straightforward with just a few quirks along the way I had to work through. I’m working on macOS 10.12, but everything should be fairly straightforward on any Unix-based system.&lt;/p&gt;"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
 </ul>
 
     </div>
@@ -126,7 +132,7 @@
       </span>
       
     <div class="postdate">
-        <time datetime="2017-08-08T02:36:28.000Z" itemprop="datePublished">2017-08-07</time>
+        <time datetime="2017-08-08T01:36:28.000Z" itemprop="datePublished">2017-08-07</time>
     </div>
 
 
@@ -149,6 +155,7 @@
 <img src="/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/minesweeper.png" title="Fancy a game of Minesweeper?">
 <p><em>20 years later and I still suck at Minesweeper.</em></p>
 <p>I decided to write a minimal boot sector to test things out. It’s pretty straightforward with just a few quirks along the way I had to work through. I’m working on macOS 10.12, but everything should be fairly straightforward on any Unix-based system.</p>
+<a id="more"></a>
 <h2 id="Cloning-the-v86-source"><a href="#Cloning-the-v86-source" class="headerlink" title="Cloning the v86 source"></a>Cloning the v86 source</h2><p>First thing, let’s clone the repo. Technically this isn’t necessary, but I like running things locally so I can mess with the code, add debugger statements, etc.</p>
 <pre><code>$ git clone https://github.com/copy/v86
 </code></pre><p>Since we’re running locally, We need to run a server or else Chrome (or any modern browser) will freak out over cross origin requests used to load the OS images. Luckily we’re provided one within the repo:</p>
@@ -290,7 +297,13 @@ dw 0xaa55
   <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
   <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
   <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&title=Writing a minimal boot sector for the v86 emulator"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&name=Writing a minimal boot sector for the v86 emulator&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/&name=Writing a minimal boot sector for the v86 emulator&description=&lt;p&gt;I came across this x86 virtualization project yesterday on a bored Sunday afternoon. I’m not sure how I didn’t find this project earlier. &lt;a href=&#34;http://copy.sh/v86/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Check it out&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;This is incredible. A x86 emulator written in JavaScript. Yes, JavaScript! It supports Windows 95, 98, and even MS-DOS. This hits home because these are the OSes that I used growing up as a kid. Seeing them emulated on modern hardware is quite the trip. Even better, it’s all done in JavaScript and runs within your browser. Oh how far we’ve come…&lt;/p&gt;
+&lt;img src=&#34;/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/clouds.png&#34; title=&#34;Clouds desktop wallpaper&#34;&gt;
+&lt;p&gt;&lt;em&gt;The Clouds desktop wallpaper, the de facto “cool” wallpaper.&lt;/em&gt;&lt;/p&gt;
+&lt;img src=&#34;/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/minesweeper.png&#34; title=&#34;Fancy a game of Minesweeper?&#34;&gt;
+&lt;p&gt;&lt;em&gt;20 years later and I still suck at Minesweeper.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;I decided to write a minimal boot sector to test things out. It’s pretty straightforward with just a few quirks along the way I had to work through. I’m working on macOS 10.12, but everything should be fairly straightforward on any Unix-based system.&lt;/p&gt;"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
 </ul>
 
     </div>
@@ -308,7 +321,7 @@ dw 0xaa55
     
     <footer id="footer">
   <div class="footer-left">
-    Copyright &copy; 2018 Benjamin Doherty
+    Copyright &copy; 2019 Benjamin Doherty
   </div>
   <div class="footer-right">
     <nav>
