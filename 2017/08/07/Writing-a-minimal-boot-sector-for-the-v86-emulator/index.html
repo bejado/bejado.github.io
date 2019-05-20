@@ -17,7 +17,7 @@
 <meta property="og:image" content="http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/clouds.png">
 <meta property="og:image" content="http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/minesweeper.png">
 <meta property="og:image" content="http://yoursite.com/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/hello_world.png">
-<meta property="og:updated_time" content="2018-06-17T16:35:54.162Z">
+<meta property="og:updated_time" content="2019-05-20T06:12:11.595Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Writing a minimal boot sector for the v86 emulator">
 <meta name="twitter:description" content="I came across this x86 virtualization project yesterday on a bored Sunday afternoon. I’m not sure how I didn’t find this project earlier. Check it out. This is incredible. A x86 emulator written in Ja">
@@ -157,97 +157,32 @@
 <p>I decided to write a minimal boot sector to test things out. It’s pretty straightforward with just a few quirks along the way I had to work through. I’m working on macOS 10.12, but everything should be fairly straightforward on any Unix-based system.</p>
 <a id="more"></a>
 <h2 id="Cloning-the-v86-source"><a href="#Cloning-the-v86-source" class="headerlink" title="Cloning the v86 source"></a>Cloning the v86 source</h2><p>First thing, let’s clone the repo. Technically this isn’t necessary, but I like running things locally so I can mess with the code, add debugger statements, etc.</p>
-<pre><code>$ git clone https://github.com/copy/v86
-</code></pre><p>Since we’re running locally, We need to run a server or else Chrome (or any modern browser) will freak out over cross origin requests used to load the OS images. Luckily we’re provided one within the repo:</p>
-<pre><code>$ cd v86
-$ make run
-</code></pre><p>This uses Python’s <code>SimpleHTTPServer</code> to serve all the files locally. Now we can open up a web browser (you may have to first allow network connections from Python):</p>
-<p><code>localhost:8000/debug.html</code></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ git clone https://github.com/copy/v86</span><br></pre></td></tr></table></figure>
+<p>Since we’re running locally, We need to run a server or else Chrome (or any modern browser) will freak out over cross origin requests used to load the OS images. Luckily we’re provided one within the repo:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ cd v86</span><br><span class="line">$ make run</span><br></pre></td></tr></table></figure>
+<p>This uses Python’s <code>SimpleHTTPServer</code> to serve all the files locally. Now we can open up a web browser (you may have to first allow network connections from Python): <code>localhost:8000/debug.html</code>.</p>
 <p>We see a bunch of predefined images under Quickstart, but we won’t bother with any of those (they must be downloaded separately and aren’t included in the repo we just cloned). They sure are fun to play mess around with though. I recommend doing it directly from copy.sh/v86.</p>
 <h2 id="Writing-a-simple-boot-device"><a href="#Writing-a-simple-boot-device" class="headerlink" title="Writing a simple boot device"></a>Writing a simple boot device</h2><p>Alright, without clicking anything else, hit ‘Start Emulation’. We see a BIOS message which tells us booting has failed due to no bootable devices. So let’s make one!</p>
 <p>I won’t go too in depth into how an x86 processor boots up. There’s plenty of resources out there that go into it in depth. One of my favorite is this unfinished draft, <a href="https://www.cs.bham.ac.uk/~exr/lectures/opsys/10_11/lectures/os-dev.pdf" target="_blank" rel="noopener">“Writing a Simple Operating System - from Scratch”</a> by Nick Blundell. I recommend Chapters 2 and 3 as a basis into writing boot sector code. I can’t remember how I found it, but it’s quite illuminating if you’ve never written code outside of <a href="https://en.wikipedia.org/wiki/User_space" target="_blank" rel="noopener">userland</a> before.</p>
 <p>Here’s our minimal “Hello world” boot sector:</p>
-<pre><code>;
-; A minimal boot sector that prints a &apos;Hello, world&apos; message
-;
-
-; Initialize the stack pointer to the address 0x8000
-mov bp, 0x8000
-mov sp, bp
-
-; Our boot sector has been loaded into memory at 0x7c00
-; Set our es segment register to 0x07c0
-; the address to print is calculated (segment * 16 + offset)
-mov ax, 0x07c0
-mov es, ax
-
-; Call BIOS service to print a string
-mov bp, hello
-mov ah, 0x13        ; BIOS function 13 - print a string to the screen
-mov al, 0x01        ; argument, update cursor after printing
-mov bl, 0x0b        ; argument, text color - magenta
-mov cx, 12          ; argument, length of string (including the null terminator)
-mov dh, 2           ; argument, row to put string
-mov dl, 0           ; argument, column to put string
-int 10h             ; call BIOS service
-
-; Loop until the end of time
-jmp $
-
-hello db &apos;Hello World&apos;
-
-; Padding and magic BIOS number
-times 510-($-$$) db 0
-dw 0xaa55
-</code></pre><p>We can compile it to binary with <a href="http://www.nasm.us/" target="_blank" rel="noopener">nasm</a>:</p>
-<pre><code>$ nasm -f bin os.asm
-</code></pre><p>The <code>-f bin</code> flags instructs nasm to output raw binary. Let’s open with a hex editor and verify our boot sector:</p>
-<pre><code>bd00 8089 ecb8 c007 8ec0 bd1e 00b4 13b0 01b3 0bb9 0c00 b602 b200 cd10 ebfe 4865
-6c6c 6f20 576f 726c 6400 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 55aa
-</code></pre><p>Notice it’s 512 bytes (the length of a sector), and the last bytes are the magic number <code>55AA</code>. The “junk” in the first 20 bytes or so is our boot code!</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">;</span><br><span class="line">; A minimal boot sector that prints a &apos;Hello, world&apos; message</span><br><span class="line">;</span><br><span class="line"></span><br><span class="line">; Initialize the stack pointer to the address 0x8000</span><br><span class="line">mov bp, 0x8000</span><br><span class="line">mov sp, bp</span><br><span class="line"></span><br><span class="line">; Our boot sector has been loaded into memory at 0x7c00</span><br><span class="line">; Set our es segment register to 0x07c0</span><br><span class="line">; the address to print is calculated (segment * 16 + offset)</span><br><span class="line">mov ax, 0x07c0</span><br><span class="line">mov es, ax</span><br><span class="line"></span><br><span class="line">; Call BIOS service to print a string</span><br><span class="line">mov bp, hello</span><br><span class="line">mov ah, 0x13        ; BIOS function 13 - print a string to the screen</span><br><span class="line">mov al, 0x01        ; argument, update cursor after printing</span><br><span class="line">mov bl, 0x0b        ; argument, text color - magenta</span><br><span class="line">mov cx, 12          ; argument, length of string (including the null terminator)</span><br><span class="line">mov dh, 2           ; argument, row to put string</span><br><span class="line">mov dl, 0           ; argument, column to put string</span><br><span class="line">int 10h             ; call BIOS service</span><br><span class="line"></span><br><span class="line">; Loop until the end of time</span><br><span class="line">jmp $</span><br><span class="line"></span><br><span class="line">hello db &apos;Hello World&apos;</span><br><span class="line"></span><br><span class="line">; Padding and magic BIOS number</span><br><span class="line">times 510-($-$$) db 0</span><br><span class="line">dw 0xaa55</span><br></pre></td></tr></table></figure>
+<p>We can compile it to binary with <a href="http://www.nasm.us/" target="_blank" rel="noopener">nasm</a>:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ nasm -f bin os.asm</span><br></pre></td></tr></table></figure>
+<p>The <code>-f bin</code> flags instructs nasm to output raw binary. Let’s open with a hex editor and verify our boot sector:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">bd00 8089 ecb8 c007 8ec0 bd1e 00b4 13b0 01b3 0bb9 0c00 b602 b200 cd10 ebfe 4865</span><br><span class="line">6c6c 6f20 576f 726c 6400 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span><br><span class="line">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 55aa</span><br></pre></td></tr></table></figure>
+<p>Notice it’s 512 bytes (the length of a sector), and the last bytes are the magic number <code>55AA</code>. The “junk” in the first 20 bytes or so is our boot code!</p>
 <p>This bootsector will work with emulators like Bochs and Qemu, but One quirk with v86 is that we must provide a “full” floppy disk, not just the first sector. Pro tip: always have your network tab open in Chrome in order to see debug messages!</p>
 <p>Looking at the v86 code, we can see the different floppy types supported. <a href="https://github.com/copy/v86/blob/5ef8c3e614ed3b4548cd2af9007f464742ac6a51/src/floppy.js#L64-L76" target="_blank" rel="noopener">src/floppy.js</a>:</p>
-<pre><code>var floppy_types = {
-            160  : { type: 1, tracks: 40, sectors: 8 , heads: 1 },
-            180  : { type: 1, tracks: 40, sectors: 9 , heads: 1 },
-            200  : { type: 1, tracks: 40, sectors: 10, heads: 1 },
-            320  : { type: 1, tracks: 40, sectors: 8 , heads: 2 },
-            360  : { type: 1, tracks: 40, sectors: 9 , heads: 2 },
-            400  : { type: 1, tracks: 40, sectors: 10, heads: 2 },
-            720  : { type: 3, tracks: 80, sectors: 9 , heads: 2 },
-            1200 : { type: 2, tracks: 80, sectors: 15, heads: 2 },
-            1440 : { type: 4, tracks: 80, sectors: 18, heads: 2 },
-            1722 : { type: 5, tracks: 82, sectors: 21, heads: 2 },
-            2880 : { type: 5, tracks: 80, sectors: 36, heads: 2 },
-        };
-
-        ...
-
-            floppy_type = floppy_types[this.floppy_size &gt;&gt; 10];
-</code></pre><p>We’ll target the first, smallest one, which is more than enough for our purposes.</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> floppy_types = &#123;</span><br><span class="line">            <span class="number">160</span>  : &#123; <span class="attr">type</span>: <span class="number">1</span>, <span class="attr">tracks</span>: <span class="number">40</span>, <span class="attr">sectors</span>: <span class="number">8</span> , <span class="attr">heads</span>: <span class="number">1</span> &#125;,</span><br><span class="line">            <span class="number">180</span>  : &#123; <span class="attr">type</span>: <span class="number">1</span>, <span class="attr">tracks</span>: <span class="number">40</span>, <span class="attr">sectors</span>: <span class="number">9</span> , <span class="attr">heads</span>: <span class="number">1</span> &#125;,</span><br><span class="line">            <span class="number">200</span>  : &#123; <span class="attr">type</span>: <span class="number">1</span>, <span class="attr">tracks</span>: <span class="number">40</span>, <span class="attr">sectors</span>: <span class="number">10</span>, <span class="attr">heads</span>: <span class="number">1</span> &#125;,</span><br><span class="line">            <span class="number">320</span>  : &#123; <span class="attr">type</span>: <span class="number">1</span>, <span class="attr">tracks</span>: <span class="number">40</span>, <span class="attr">sectors</span>: <span class="number">8</span> , <span class="attr">heads</span>: <span class="number">2</span> &#125;,</span><br><span class="line">            <span class="number">360</span>  : &#123; <span class="attr">type</span>: <span class="number">1</span>, <span class="attr">tracks</span>: <span class="number">40</span>, <span class="attr">sectors</span>: <span class="number">9</span> , <span class="attr">heads</span>: <span class="number">2</span> &#125;,</span><br><span class="line">            <span class="number">400</span>  : &#123; <span class="attr">type</span>: <span class="number">1</span>, <span class="attr">tracks</span>: <span class="number">40</span>, <span class="attr">sectors</span>: <span class="number">10</span>, <span class="attr">heads</span>: <span class="number">2</span> &#125;,</span><br><span class="line">            <span class="number">720</span>  : &#123; <span class="attr">type</span>: <span class="number">3</span>, <span class="attr">tracks</span>: <span class="number">80</span>, <span class="attr">sectors</span>: <span class="number">9</span> , <span class="attr">heads</span>: <span class="number">2</span> &#125;,</span><br><span class="line">            <span class="number">1200</span> : &#123; <span class="attr">type</span>: <span class="number">2</span>, <span class="attr">tracks</span>: <span class="number">80</span>, <span class="attr">sectors</span>: <span class="number">15</span>, <span class="attr">heads</span>: <span class="number">2</span> &#125;,</span><br><span class="line">            <span class="number">1440</span> : &#123; <span class="attr">type</span>: <span class="number">4</span>, <span class="attr">tracks</span>: <span class="number">80</span>, <span class="attr">sectors</span>: <span class="number">18</span>, <span class="attr">heads</span>: <span class="number">2</span> &#125;,</span><br><span class="line">            <span class="number">1722</span> : &#123; <span class="attr">type</span>: <span class="number">5</span>, <span class="attr">tracks</span>: <span class="number">82</span>, <span class="attr">sectors</span>: <span class="number">21</span>, <span class="attr">heads</span>: <span class="number">2</span> &#125;,</span><br><span class="line">            <span class="number">2880</span> : &#123; <span class="attr">type</span>: <span class="number">5</span>, <span class="attr">tracks</span>: <span class="number">80</span>, <span class="attr">sectors</span>: <span class="number">36</span>, <span class="attr">heads</span>: <span class="number">2</span> &#125;,</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        ...</span><br><span class="line"></span><br><span class="line">            floppy_type = floppy_types[<span class="keyword">this</span>.floppy_size &gt;&gt; <span class="number">10</span>];</span><br></pre></td></tr></table></figure>
+<p>We’ll target the first, smallest one, which is more than enough for our purposes.</p>
 <p><code>this.floppy_size</code> is the number of bytes of our OS image. Right now it’s 512, but we clearly need to add more bytes to make it a “full” floppy. Each sector is 512 bytes, and there are 8 sectors per track. 512 * 8 * 40 = 163840 bytes.</p>
 <p>We can also verify this by bitshifting <code>floppy_size</code> 10 to the left. Our desired “size” is 160.</p>
-<pre><code>&gt; 160 &lt;&lt; 10
-163840
-</code></pre><p>Perfect! So our floppy needs to be 163840 bytes long. Since our boot sector is already 512 bytes, we just need to add 163840 - 512 bytes to the end, which is exactly what we’ll do:</p>
-<pre><code>times (163840-512) db 0
-</code></pre><p>Let’s compile it with nasm again and then run it. <a href="https://gist.github.com/bejado/ee2feb20819f0ad5eeb2e0da5c3f8beb" target="_blank" rel="noopener">Here’s the complete assembly code</a>.</p>
-<pre><code>$ nasm -f bin os.asm
-</code></pre><h2 id="Booting-our-floppy-image"><a href="#Booting-our-floppy-image" class="headerlink" title="Booting our floppy image"></a>Booting our floppy image</h2><p>Go back to the v86 web page and hit the “exit” button to return to the main screen. We’ll choose our newly crafted floppy image as the “Floppy disk image.” Hit Start Emulation, wait a few seconds, and voila!</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&gt; 160 &lt;&lt; 10</span><br><span class="line">163840</span><br></pre></td></tr></table></figure>
+<p>Perfect! So our floppy needs to be 163840 bytes long. Since our boot sector is already 512 bytes, we just need to add 163840 - 512 bytes to the end, which is exactly what we’ll do:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">times (163840-512) db 0</span><br></pre></td></tr></table></figure>
+<p>Let’s compile it with nasm again and then run it. <a href="https://gist.github.com/bejado/ee2feb20819f0ad5eeb2e0da5c3f8beb" target="_blank" rel="noopener">Here’s the complete assembly code</a>.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ nasm -f bin os.asm</span><br></pre></td></tr></table></figure>
+<h2 id="Booting-our-floppy-image"><a href="#Booting-our-floppy-image" class="headerlink" title="Booting our floppy image"></a>Booting our floppy image</h2><p>Go back to the v86 web page and hit the “exit” button to return to the main screen. We’ll choose our newly crafted floppy image as the “Floppy disk image.” Hit Start Emulation, wait a few seconds, and voila!</p>
 <img src="/2017/08/07/Writing-a-minimal-boot-sector-for-the-v86-emulator/hello_world.png" title="The final product">
 <p>There you have it, a bootable floppy image in ~17 lines of assembly. There’s so much more we can do from here. I had fun playing around with the v86 source code, setting debugger statements here and there and seeing how the emulation works. It’s complex, but at its essence it’s not doing anything magical. Take a look at <a href="https://github.com/copy/v86/blob/master/src/instructions.js" target="_blank" rel="noopener">src/instructions.js</a> where we can see (almost) every x86 instruction fully emulated.</p>
 <p>In JavaScript.</p>
